@@ -393,7 +393,7 @@
             position: absolute;
             left: 12px;
             right: 12px;
-            bottom: 12px;
+            top: 12px; /* move to top so it doesn't cover native controls */
             display: none; /* shown only for admins + in fullscreen */
             gap: 8px;
             align-items: center;
@@ -1126,7 +1126,22 @@
             fsHideTimer = setTimeout(() => fsControls.classList.add('hidden'), 2500);
         }
 
-        document.addEventListener('fullscreenchange', updateFsControlsVisibility);
+        let fixingNativeFs = false;
+        document.addEventListener('fullscreenchange', async () => {
+            try {
+                // If user used the native button (video element fullscreen), switch to container
+                if (!fixingNativeFs && document.fullscreenElement === videoPlayer) {
+                    fixingNativeFs = true;
+                    await document.exitFullscreen().catch(()=>{});
+                    if (videoContainer.requestFullscreen) {
+                        await videoContainer.requestFullscreen().catch(()=>{});
+                    }
+                    fixingNativeFs = false;
+                }
+            } finally {
+                updateFsControlsVisibility();
+            }
+        });
         videoContainer.addEventListener('mousemove', showFsControlsTemporarily);
 
         // Fullscreen toggle requests fullscreen for the container so overlay is included
