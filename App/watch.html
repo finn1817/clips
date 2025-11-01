@@ -1109,8 +1109,8 @@
 
         function updateFsControlsVisibility() {
             if (!isAdmin) return;
-            // Only show overlay while in fullscreen
-            if (isFullScreen()) {
+            // Only show overlay while the CONTAINER is fullscreen
+            if (document.fullscreenElement === videoContainer) {
                 fsControls.classList.remove('hidden');
                 // Start auto-hide timer
                 showFsControlsTemporarily();
@@ -1126,33 +1126,31 @@
             fsHideTimer = setTimeout(() => fsControls.classList.add('hidden'), 2500);
         }
 
-        let fixingNativeFs = false;
-        document.addEventListener('fullscreenchange', async () => {
-            try {
-                // If user used the native button (video element fullscreen), switch to container
-                if (!fixingNativeFs && document.fullscreenElement === videoPlayer) {
-                    fixingNativeFs = true;
-                    await document.exitFullscreen().catch(()=>{});
-                    if (videoContainer.requestFullscreen) {
-                        await videoContainer.requestFullscreen().catch(()=>{});
-                    }
-                    fixingNativeFs = false;
-                }
-            } finally {
-                updateFsControlsVisibility();
-            }
+        document.addEventListener('fullscreenchange', () => {
+            updateFsControlsVisibility();
         });
         videoContainer.addEventListener('mousemove', showFsControlsTemporarily);
 
         // Fullscreen toggle requests fullscreen for the container so overlay is included
-        document.getElementById('fsFullscreenToggle').addEventListener('click', async () => {
+        async function toggleContainerFullscreen() {
             try {
-                if (document.fullscreenElement) {
+                if (document.fullscreenElement === videoContainer) {
                     await document.exitFullscreen();
                 } else {
                     if (videoContainer.requestFullscreen) await videoContainer.requestFullscreen();
                 }
             } catch (e) { console.warn('fullscreen toggle failed', e); }
+        }
+
+        document.getElementById('fsFullscreenToggle').addEventListener('click', toggleContainerFullscreen);
+
+        // Also allow double-click on the video container and pressing 'f' to toggle container fullscreen
+        videoContainer.addEventListener('dblclick', toggleContainerFullscreen);
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'f' || e.key === 'F') && document.activeElement) {
+                // treat as user gesture
+                toggleContainerFullscreen();
+            }
         });
     </script>
 </body>
