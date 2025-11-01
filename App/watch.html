@@ -458,7 +458,7 @@
     <div class="main-container">
         <div class="video-section">
             <div class="video-container">
-                <video id="videoPlayer" controls crossorigin="anonymous">
+                <video id="videoPlayer" controls>
                     <source src="" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
@@ -469,7 +469,6 @@
                     <button class="control-btn sm" id="fsEditModeBtn">✏️ Enable Drawing Mode</button>
                     <button class="control-btn sm" id="fsDownloadBtn">⬇️ Download Video</button>
                     <button class="control-btn sm" id="fsPinHereBtn">📍 Pin Here</button>
-                    <button class="control-btn sm" id="fsSetThumbBtn">🖼️ Set Thumbnail</button>
                     <button class="control-btn sm" id="fsFullscreenToggle" title="Toggle Fullscreen">⛶ Fullscreen</button>
                 </div>
             </div>
@@ -484,7 +483,6 @@
                     <button class="control-btn" id="editModeBtn">✏️ Enable Drawing Mode</button>
                     <button class="control-btn" id="downloadBtn">⬇️ Download Video</button>
                     <button class="control-btn" id="pinHereBtn">📍 Pin Here</button>
-                    <button class="control-btn" id="setThumbBtn">🖼️ Set Thumbnail</button>
                 </div>
                 <div class="drawing-tools" id="drawingTools">
                     <span style="font-size: 14px; color: #aaa;">Drawing Tools:</span>
@@ -508,8 +506,8 @@
     </div>
 
     <script type="module">
-    import { collection, getDocs, doc, getDoc, deleteDoc, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
-    import { getStorage, ref, deleteObject, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
+    import { collection, getDocs, doc, getDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+    import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
     import { app, db, validateSessionAndGetUser, attachLogout } from "../js/auth.js";
 
         const firebaseConfig = {
@@ -637,8 +635,7 @@
             });
             event.currentTarget.classList.add('active');
 
-            // Set video source (enable CORS so we can capture frames to canvas)
-            try { videoPlayer.crossOrigin = 'anonymous'; } catch {}
+            // Set video source
             videoPlayer.src = videoData.downloadURL;
             videoPlayer.load();
 
@@ -793,7 +790,7 @@
         mirror('editModeBtn','fsEditModeBtn');
         mirror('downloadBtn','fsDownloadBtn');
         mirror('pinHereBtn','fsPinHereBtn');
-        mirror('setThumbBtn','fsSetThumbBtn');
+    // Thumbnail feature removed
 
         // Pin Here (admin)
         document.getElementById('pinHereBtn').addEventListener('click', async () => {
@@ -826,43 +823,7 @@
             }
         });
 
-        // Set Thumbnail (admin)
-        document.getElementById('setThumbBtn').addEventListener('click', async () => {
-            if (!isAdmin || !currentVideoData) {
-                alert('Select a video first');
-                return;
-            }
-            try {
-                const blob = await captureFrame(videoPlayer);
-                if (!blob) {
-                    alert('Could not capture frame. If this persists, your Storage bucket may need CORS enabled.');
-                    return;
-                }
-                const thumbPath = `thumbnails/${currentVideoId}.jpg`;
-                const storageRef = ref(storage, thumbPath);
-                await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
-                const url = await getDownloadURL(storageRef);
-                await updateVideoDoc({ thumbnailURL: url, thumbnailPath: thumbPath, thumbnailUpdatedAt: new Date() });
-                // Update currentVideoData and list UI casually
-                currentVideoData.thumbnailURL = url;
-                // Refresh list for current visual update (optional: minimal patch)
-                loadVideos();
-                alert('Thumbnail set successfully');
-            } catch (err) {
-                console.error('Error setting thumbnail:', err);
-                alert('Could not set thumbnail: ' + (err.message || 'unknown'));
-            }
-        });
-
-        async function updateVideoDoc(patch) {
-            try {
-                const docRef = doc(db, 'videos', currentVideoId);
-                await updateDoc(docRef, patch);
-            } catch (e) {
-                console.error('updateVideoDoc failed', e);
-                throw e;
-            }
-        }
+        // Set Thumbnail feature removed
 
         // Drawing mode
         document.getElementById('editModeBtn').addEventListener('click', () => {
@@ -1055,21 +1016,7 @@
             }, 6000);
         }
 
-        async function captureFrame(videoEl) {
-            try {
-                const w = videoEl.videoWidth || 1280;
-                const h = videoEl.videoHeight || 720;
-                const c = document.createElement('canvas');
-                c.width = Math.max(320, Math.min(960, w));
-                c.height = Math.round(c.width * (h / w));
-                const cctx = c.getContext('2d');
-                cctx.drawImage(videoEl, 0, 0, c.width, c.height);
-                return await new Promise(resolve => c.toBlob(resolve, 'image/jpeg', 0.8));
-            } catch (e) {
-                console.error('captureFrame failed', e);
-                return null;
-            }
-        }
+        // captureFrame removed (thumbnail feature disabled)
 
         // Make pin overlay draggable
         (function makeOverlayDraggable(){
@@ -1151,7 +1098,7 @@
                 // treat as user gesture
                 toggleContainerFullscreen();
             }
-        });
+        }); // Back to working point...
     </script>
 </body>
 </html>
