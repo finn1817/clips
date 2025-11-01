@@ -135,37 +135,5 @@ export async function validateSessionAndGetUser({ requireAdmin = false, redirect
 }
 
 // ---- Admin seed (idempotent) ----
-export async function ensureAdminSeed() {
-	const adminEmail = 'danfinn@timon.edu';
-	const adminPassword = 'Password123';
-	try {
-		const existing = await getUserDocByEmail(adminEmail);
-		if (existing) {
-			const data = existing.data();
-			if (!data.isAdmin) await updateDoc(doc(db, 'users', existing.id), { isAdmin: true });
-			console.log('Admin user already exists');
-			return { id: existing.id, existed: true };
-		}
-		const salt = randomSaltB64();
-		const iterations = 150000;
-		const passwordHash = await deriveKey(adminPassword, salt, iterations);
-		const usersCol = collection(db, 'users');
-		const newDocRef = doc(usersCol);
-		await setDoc(newDocRef, {
-			email: adminEmail.toLowerCase(),
-			displayName: 'DanFinn',
-			passwordHash,
-			salt,
-			iterations,
-			isAdmin: true,
-			createdAt: new Date(),
-			createdDate: new Date().toISOString()
-		});
-		console.log('Seeded admin user');
-		return { id: newDocRef.id, existed: false };
-	} catch (e) {
-		console.error('Error seeding admin:', e);
-		return { error: e };
-	}
-}
+// Seeding removed; admins should be assigned manually by an existing admin.
 

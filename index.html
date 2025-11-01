@@ -253,54 +253,7 @@
         // ---- Auth helpers using Firestore ----
         let isLoginMode = true;
 
-        async function seedAdminAccount() {
-            const adminEmail = 'danfinn@timon.edu';
-            const adminPassword = 'Password123';
-
-            try {
-                // Check if admin user exists by email
-                const q = query(collection(db, 'users'), where('email', '==', adminEmail));
-                const snap = await getDocs(q);
-                if (!snap.empty) {
-                    // Ensure isAdmin is true on existing doc
-                    const docSnap = snap.docs[0];
-                    const data = docSnap.data();
-                    if (!data.isAdmin) {
-                        await updateDoc(doc(db, 'users', docSnap.id), { isAdmin: true });
-                        console.log('Updated existing user to isAdmin=true');
-                    } else {
-                        console.log('Admin user already present');
-                    }
-                    return;
-                }
-
-                // Create a new user doc with PBKDF2-derived password
-                const salt = randomSaltB64();
-                const iterations = 150000;
-                const pwdHash = await deriveKey(adminPassword, salt, iterations);
-
-                // Add user doc (auto-id)
-                const usersCol = collection(db, 'users');
-                const newDocRef = doc(usersCol);
-                await setDoc(newDocRef, {
-                    email: adminEmail,
-                    displayName: 'DanFinn',
-                    passwordHash: pwdHash,
-                    salt: salt,
-                    iterations: iterations,
-                    isAdmin: true,
-                    createdAt: new Date(),
-                    createdDate: new Date().toISOString()
-                });
-
-                console.log('Seeded admin user in Firestore');
-            } catch (err) {
-                console.error('Error seeding admin account:', err);
-            }
-        }
-
-        // Run seeding on load
-        seedAdminAccount();
+        
 
         // Toggle link
         document.getElementById('toggleLink').addEventListener('click', () => {
