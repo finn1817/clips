@@ -458,7 +458,7 @@
     <div class="main-container">
         <div class="video-section">
             <div class="video-container">
-                <video id="videoPlayer" controls>
+                <video id="videoPlayer" controls crossorigin="anonymous">
                     <source src="" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
@@ -637,7 +637,8 @@
             });
             event.currentTarget.classList.add('active');
 
-            // Set video source
+            // Set video source (enable CORS so we can capture frames to canvas)
+            try { videoPlayer.crossOrigin = 'anonymous'; } catch {}
             videoPlayer.src = videoData.downloadURL;
             videoPlayer.load();
 
