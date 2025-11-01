@@ -13,13 +13,13 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f0f0f;
+            background: #001a00;
             color: white;
             min-height: 100vh;
         }
 
         .navbar {
-            background: #202020;
+            background: #003c00;
             padding: 15px 30px;
             display: flex;
             justify-content: space-between;
@@ -33,9 +33,7 @@
             color: #fff;
         }
 
-        .navbar-brand span {
-            color: #3ea6ff;
-        }
+        .navbar-brand span { color: #fff; }
 
         .navbar-actions {
             display: flex;
@@ -44,7 +42,7 @@
 
         .navbar-btn {
             padding: 8px 16px;
-            background: #3ea6ff;
+            background: #006400;
             color: white;
             border: none;
             border-radius: 4px;
@@ -54,23 +52,12 @@
             transition: all 0.3s;
         }
 
-        .navbar-btn:hover {
-            background: #1c8fe0;
-        }
+        .navbar-btn:hover { background: #003c00; }
 
-        .navbar-btn.secondary {
-            background: #2a2a2a;
-        }
+        .navbar-btn.secondary { background: #003c00; }
+        .navbar-btn.secondary:hover { background: #006400; }
 
-        .navbar-btn.secondary:hover {
-            background: #3a3a3a;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
 
         .header {
             margin-bottom: 30px;
@@ -86,20 +73,14 @@
             font-size: 16px;
         }
 
-        .members-table {
-            background: #202020;
-            border-radius: 8px;
-            overflow: hidden;
-        }
+        .members-table { background: #0f2a0f; border-radius: 8px; overflow: hidden; border: 1px solid #003c00; }
 
         table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        thead {
-            background: #2a2a2a;
-        }
+        thead { background: #003c00; }
 
         th {
             padding: 15px;
@@ -110,32 +91,13 @@
             letter-spacing: 0.5px;
         }
 
-        td {
-            padding: 15px;
-            border-top: 1px solid #2a2a2a;
-        }
+        td { padding: 15px; border-top: 1px solid #003c00; }
 
-        tr:hover {
-            background: #2a2a2a;
-        }
+        tr:hover { background: #143014; }
 
-        .admin-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            background: #3ea6ff;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
+        .admin-badge { display: inline-block; padding: 4px 10px; background: #006400; border-radius: 12px; font-size: 12px; font-weight: 600; }
 
-        .user-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            background: #666;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
+        .user-badge { display: inline-block; padding: 4px 10px; background: #003c00; border-radius: 12px; font-size: 12px; font-weight: 600; }
 
         .toggle-switch {
             position: relative;
@@ -157,7 +119,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #666;
+            background-color: #003c00;
             transition: .3s;
             border-radius: 24px;
         }
@@ -174,9 +136,7 @@
             border-radius: 50%;
         }
 
-        input:checked + .slider {
-            background-color: #3ea6ff;
-        }
+        input:checked + .slider { background-color: #006400; }
 
         input:checked + .slider:before {
             transform: translateX(26px);

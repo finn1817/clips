@@ -17,13 +17,13 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f0f0f;
+            background: #001a00; /* deep green backdrop */
             color: white;
             overflow: hidden; /* Prevent page scroll; we'll scroll inside sections */
         }
 
         .navbar {
-            background: #202020;
+            background: #003c00; /* dark green */
             padding: 15px 30px;
             display: flex;
             justify-content: space-between;
@@ -37,9 +37,7 @@
             color: #fff;
         }
 
-        .navbar-brand span {
-            color: #3ea6ff;
-        }
+        .navbar-brand span { color: #fff; }
 
         .brand-logo {
             height: 26px;
@@ -58,7 +56,7 @@
 
         .navbar-btn {
             padding: 8px 16px;
-            background: #3ea6ff;
+            background: #006400; /* primary green */
             color: white;
             border: none;
             border-radius: 4px;
@@ -68,17 +66,10 @@
             transition: all 0.3s;
         }
 
-        .navbar-btn:hover {
-            background: #1c8fe0;
-        }
+        .navbar-btn:hover { background: #003c00; }
 
-        .navbar-btn.secondary {
-            background: #2a2a2a;
-        }
-
-        .navbar-btn.secondary:hover {
-            background: #3a3a3a;
-        }
+        .navbar-btn.secondary { background: #003c00; }
+        .navbar-btn.secondary:hover { background: #006400; }
 
         .main-container {
             display: flex;
@@ -125,13 +116,14 @@
         }
 
         .video-info {
-            background: #202020;
+            background: #0f2a0f;
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 10px;
             flex: 1 1 0;
             min-height: 0;
             overflow: auto; /* Scroll only the description/pins area */
+            border: 1px solid #003c00;
         }
 
         .video-title {
@@ -147,12 +139,13 @@
         }
 
         .admin-controls {
-            background: #202020;
+            background: #0f2a0f;
             padding: 12px 15px;
             border-radius: 8px;
             display: none;
             margin-bottom: 0;
             flex: 0 0 auto; /* fixed footer-like row under scroller */
+            border: 1px solid #003c00;
         }
 
         .admin-controls.visible {
@@ -168,7 +161,7 @@
 
         .control-btn {
             padding: 10px 20px;
-            background: #3ea6ff;
+            background: #006400;
             color: white;
             border: none;
             border-radius: 4px;
@@ -178,9 +171,7 @@
             transition: all 0.3s;
         }
 
-        .control-btn:hover {
-            background: #1c8fe0;
-        }
+        .control-btn:hover { background: #003c00; }
 
         .control-btn.danger {
             background: #ff4444;
@@ -190,9 +181,7 @@
             background: #cc0000;
         }
 
-        .control-btn.active {
-            background: #ff9800;
-        }
+        .control-btn.active { background: #003c00; }
 
         .drawing-tools {
             display: none;
@@ -200,7 +189,7 @@
             align-items: center;
             margin-top: 10px;
             padding-top: 10px;
-            border-top: 1px solid #3a3a3a;
+            border-top: 1px solid #003c00;
         }
 
         .drawing-tools.visible {
@@ -217,7 +206,7 @@
 
         .tool-btn {
             padding: 8px 16px;
-            background: #2a2a2a;
+            background: #0f2a0f;
             color: white;
             border: none;
             border-radius: 4px;
@@ -225,32 +214,29 @@
             font-size: 13px;
         }
 
-        .tool-btn:hover {
-            background: #3a3a3a;
-        }
+        .tool-btn:hover { background: #003c00; }
 
-        .tool-btn.active {
-            background: #3ea6ff;
-        }
+        .tool-btn.active { background: #006400; }
 
         .sidebar {
             width: 400px;
-            background: #202020;
+            background: #0f2a0f;
             border-radius: 8px;
             padding: 20px;
             height: 100%;
             overflow-y: auto; /* Scroll only video list */
+            border: 1px solid #003c00;
         }
 
         .sidebar h2 {
             font-size: 18px;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #3a3a3a;
+            border-bottom: 1px solid #003c00;
         }
 
         .video-list-item {
-            background: #2a2a2a;
+            background: #143014;
             padding: 12px;
             border-radius: 6px;
             margin-bottom: 10px;
@@ -266,7 +252,7 @@
             width: 96px;
             height: 54px;
             border-radius: 4px;
-            background: #111;
+            background: #0a1d0a;
             object-fit: cover;
             flex: none;
         }
@@ -277,13 +263,11 @@
         }
 
         .video-list-item:hover {
-            background: #3a3a3a;
+            background: #003c00;
             transform: translateX(5px);
         }
 
-        .video-list-item.active {
-            background: #3ea6ff;
-        }
+        .video-list-item.active { background: #006400; }
 
         .video-list-title {
             font-size: 15px;
@@ -314,9 +298,7 @@
             display: block;
         }
 
-        .delete-video-btn:hover {
-            background: #cc0000;
-        }
+        .delete-video-btn:hover { background: #cc0000; }
 
         .no-videos {
             text-align: center;
@@ -335,7 +317,7 @@
             top: 10px;
             right: 10px;
             background: rgba(0,0,0,0.75);
-            border: 1px solid #3a3a3a;
+            border: 1px solid #003c00;
             border-radius: 6px;
             padding: 10px 12px;
             max-width: 50%;
@@ -352,16 +334,17 @@
 
         /* Pins section */
         .pins-section {
-            background: #202020;
+            background: #0f2a0f;
             padding: 16px;
             border-radius: 8px;
             margin-top: 12px;
+            border: 1px solid #003c00;
         }
 
         .pins-section h3 {
             font-size: 16px;
             margin-bottom: 10px;
-            border-bottom: 1px solid #3a3a3a;
+            border-bottom: 1px solid #003c00;
             padding-bottom: 8px;
         }
 
@@ -370,13 +353,13 @@
             align-items: center;
             gap: 10px;
             padding: 8px 0;
-            border-bottom: 1px solid #2a2a2a;
+            border-bottom: 1px solid #003c00;
         }
 
         .pin-item:last-child { border-bottom: none; }
 
         .pin-time {
-            color: #3ea6ff;
+            color: #006400;
             font-weight: 600;
             cursor: pointer;
             flex: none;
@@ -408,7 +391,7 @@
             align-items: center;
             justify-content: flex-start;
             background: rgba(0,0,0,0.55);
-            border: 1px solid #3a3a3a;
+            border: 1px solid #003c00;
             border-radius: 8px;
             padding: 8px;
             z-index: 8;

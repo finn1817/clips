@@ -13,13 +13,13 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f0f0f;
+            background: #001a00;
             color: white;
             min-height: 100vh;
         }
 
         .navbar {
-            background: #202020;
+            background: #003c00;
             padding: 15px 30px;
             display: flex;
             justify-content: space-between;
@@ -33,9 +33,7 @@
             color: #fff;
         }
 
-        .navbar-brand span {
-            color: #3ea6ff;
-        }
+        .navbar-brand span { color: #fff; }
 
         .navbar-actions {
             display: flex;
@@ -44,7 +42,7 @@
 
         .navbar-btn {
             padding: 8px 16px;
-            background: #3ea6ff;
+            background: #006400;
             color: white;
             border: none;
             border-radius: 4px;
@@ -54,17 +52,10 @@
             transition: all 0.3s;
         }
 
-        .navbar-btn:hover {
-            background: #1c8fe0;
-        }
+        .navbar-btn:hover { background: #003c00; }
 
-        .navbar-btn.secondary {
-            background: #2a2a2a;
-        }
-
-        .navbar-btn.secondary:hover {
-            background: #3a3a3a;
-        }
+        .navbar-btn.secondary { background: #003c00; }
+        .navbar-btn.secondary:hover { background: #006400; }
 
         .container {
             max-width: 800px;
@@ -81,16 +72,9 @@
             margin-bottom: 10px;
         }
 
-        .header p {
-            color: #aaa;
-            font-size: 16px;
-        }
+        .header p { color: #cfe8cf; font-size: 16px; }
 
-        .upload-form {
-            background: #202020;
-            border-radius: 8px;
-            padding: 30px;
-        }
+        .upload-form { background: #0f2a0f; border-radius: 8px; padding: 30px; border: 1px solid #003c00; }
 
         .form-group {
             margin-bottom: 25px;
@@ -104,47 +88,21 @@
         }
 
         .form-group input[type="text"],
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            background: #2a2a2a;
-            border: 2px solid #3a3a3a;
-            border-radius: 6px;
-            color: white;
-            font-size: 15px;
-            font-family: inherit;
-            transition: all 0.3s;
-        }
+        .form-group textarea { width: 100%; padding: 12px 15px; background: #0f2a0f; border: 2px solid #003c00; border-radius: 6px; color: white; font-size: 15px; font-family: inherit; transition: all 0.3s; }
 
         .form-group input[type="text"]:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #3ea6ff;
-        }
+        .form-group textarea:focus { outline: none; border-color: #006400; }
 
         .form-group textarea {
             resize: vertical;
             min-height: 100px;
         }
 
-        .file-upload-area {
-            border: 2px dashed #3a3a3a;
-            border-radius: 8px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+        .file-upload-area { border: 2px dashed #003c00; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; }
 
-        .file-upload-area:hover {
-            border-color: #3ea6ff;
-            background: #2a2a2a;
-        }
+        .file-upload-area:hover { border-color: #006400; background: #0f2a0f; }
 
-        .file-upload-area.dragging {
-            border-color: #3ea6ff;
-            background: #2a2a2a;
-        }
+        .file-upload-area.dragging { border-color: #006400; background: #0f2a0f; }
 
         .file-upload-area input[type="file"] {
             display: none;
@@ -182,50 +140,17 @@
             font-size: 14px;
         }
 
-        .progress-bar-container {
-            width: 100%;
-            height: 30px;
-            background: #2a2a2a;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-top: 20px;
-            display: none;
-        }
+        .progress-bar-container { width: 100%; height: 30px; background: #0f2a0f; border: 1px solid #003c00; border-radius: 15px; overflow: hidden; margin-top: 20px; display: none; }
 
         .progress-bar-container.visible {
             display: block;
         }
 
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #3ea6ff 0%, #1c8fe0 100%);
-            width: 0%;
-            transition: width 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: 600;
-        }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #006400 0%, #003c00 100%); width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
 
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: #3ea6ff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 20px;
-        }
+        .submit-btn { width: 100%; padding: 15px; background: #006400; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-top: 20px; }
 
-        .submit-btn:hover {
-            background: #1c8fe0;
-            transform: translateY(-2px);
-        }
+        .submit-btn:hover { background: #003c00; transform: translateY(-2px); }
 
         .submit-btn:disabled {
             background: #666;
