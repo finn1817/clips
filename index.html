@@ -180,9 +180,9 @@
     </div>
 
     <script type="module">
+        // Firestore-based auth (stores user records in Firestore). Uses PBKDF2 via Web Crypto to derive a password hash.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBYCj-gsiuAZSnRINPrSsxUWjx6IscSwI",
@@ -194,62 +194,120 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // ---- Crypto helpers (PBKDF2) ----
+        function str2ab(str) {
+            const enc = new TextEncoder();
+            return enc.encode(str);
+        }
+
+        function ab2b64(buf) {
+            const bytes = new Uint8Array(buf);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        function b642ab(b64) {
+            const binary = atob(b64);
+            const len = binary.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        async function deriveKey(password, saltB64, iterations = 150000) {
+            const salt = b642ab(saltB64);
+            const keyMaterial = await window.crypto.subtle.importKey(
+                'raw',
+                str2ab(password),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveBits']
+            );
+
+            const derivedBits = await window.crypto.subtle.deriveBits(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: iterations,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                256
+            );
+
+            return ab2b64(derivedBits);
+        }
+
+        function randomSaltB64(length = 16) {
+            const salt = window.crypto.getRandomValues(new Uint8Array(length));
+            return ab2b64(salt.buffer);
+        }
+
+        // ---- Auth helpers using Firestore ----
         let isLoginMode = true;
 
-        // Check if user is already logged in
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.location.href = 'App/watch.html';
-            }
-        });
-
-        // Seed admin account on page load
         async function seedAdminAccount() {
+            const adminEmail = 'danfinn@timon.edu';
+            const adminPassword = 'Password123';
+
             try {
-                const adminEmail = 'danfinn@timon.edu';
-                const adminPassword = 'Password123';
-                
-                // Try to create the admin account
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
-                    const user = userCredential.user;
-                    
-                    // Create admin user document
-                    await setDoc(doc(db, 'users', user.uid), {
-                        email: adminEmail,
-                        displayName: 'DanFinn',
-                        isAdmin: true,
-                        createdAt: new Date(),
-                        lastLogin: new Date()
-                    });
-                    
-                    console.log('Admin account seeded successfully');
-                    
-                    // Sign out after seeding
-                    await auth.signOut();
-                } catch (error) {
-                    // Admin account already exists, that's fine
-                    if (error.code !== 'auth/email-already-in-use') {
-                        console.error('Error seeding admin:', error);
+                // Check if admin user exists by email
+                const q = query(collection(db, 'users'), where('email', '==', adminEmail));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    // Ensure isAdmin is true on existing doc
+                    const docSnap = snap.docs[0];
+                    const data = docSnap.data();
+                    if (!data.isAdmin) {
+                        await updateDoc(doc(db, 'users', docSnap.id), { isAdmin: true });
+                        console.log('Updated existing user to isAdmin=true');
+                    } else {
+                        console.log('Admin user already present');
                     }
+                    return;
                 }
-            } catch (error) {
-                console.error('Error in seed function:', error);
+
+                // Create a new user doc with PBKDF2-derived password
+                const salt = randomSaltB64();
+                const iterations = 150000;
+                const pwdHash = await deriveKey(adminPassword, salt, iterations);
+
+                // Add user doc (auto-id)
+                const usersCol = collection(db, 'users');
+                const newDocRef = doc(usersCol);
+                await setDoc(newDocRef, {
+                    email: adminEmail,
+                    displayName: 'DanFinn',
+                    passwordHash: pwdHash,
+                    salt: salt,
+                    iterations: iterations,
+                    isAdmin: true,
+                    createdAt: new Date(),
+                    createdDate: new Date().toISOString()
+                });
+
+                console.log('Seeded admin user in Firestore');
+            } catch (err) {
+                console.error('Error seeding admin account:', err);
             }
         }
 
-        // Seed admin on page load
+        // Run seeding on load
         seedAdminAccount();
 
-        // Toggle between login and register
+        // Toggle link
         document.getElementById('toggleLink').addEventListener('click', () => {
             isLoginMode = !isLoginMode;
             const submitBtn = document.getElementById('submitBtn');
             const toggleText = document.getElementById('toggleText');
-            
+
             if (isLoginMode) {
                 submitBtn.textContent = 'Login';
                 toggleText.innerHTML = 'Don\'t have an account? <a id="toggleLink">Register</a>';
@@ -257,79 +315,82 @@
                 submitBtn.textContent = 'Register';
                 toggleText.innerHTML = 'Already have an account? <a id="toggleLink">Login</a>';
             }
-            
-            // Re-attach event listener
             document.getElementById('toggleLink').addEventListener('click', arguments.callee);
-            
             hideMessages();
         });
 
-        // Form submission
         document.getElementById('authForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
             const submitBtn = document.getElementById('submitBtn');
-            
+
             hideMessages();
             submitBtn.classList.add('loading');
             submitBtn.textContent = 'Processing...';
-            
+
             try {
+                const q = query(collection(db, 'users'), where('email', '==', email));
+                const snap = await getDocs(q);
+
                 if (isLoginMode) {
-                    // Login
-                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-                    
-                    // Update last login
-                    await setDoc(doc(db, 'users', user.uid), {
-                        lastLogin: new Date()
-                    }, { merge: true });
-                    
+                    if (snap.empty) {
+                        throw new Error('User not found');
+                    }
+
+                    const userDoc = snap.docs[0];
+                    const data = userDoc.data();
+
+                    // Derive key with stored salt/iterations
+                    const derived = await deriveKey(password, data.salt, data.iterations || 150000);
+                    if (derived !== data.passwordHash) {
+                        throw new Error('Invalid email or password');
+                    }
+
+                    // Save session info in sessionStorage
+                    const sessionUser = {
+                        uid: userDoc.id,
+                        email: data.email,
+                        displayName: data.displayName || data.email.split('@')[0],
+                        isAdmin: !!data.isAdmin
+                    };
+                    sessionStorage.setItem('timon_currentUser', JSON.stringify(sessionUser));
+
+                    // Update lastLogin
+                    await updateDoc(doc(db, 'users', userDoc.id), { lastLogin: new Date() });
+
                     showSuccess('Login successful! Redirecting...');
-                    setTimeout(() => {
-                        window.location.href = 'App/watch.html';
-                    }, 1000);
+                    setTimeout(() => { window.location.href = 'App/watch.html'; }, 800);
                 } else {
                     // Register
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-                    
-                    // Extract name from email (before @)
+                    if (!snap.empty) {
+                        throw new Error('Email already registered');
+                    }
+
+                    const salt = randomSaltB64();
+                    const iterations = 150000;
+                    const pwdHash = await deriveKey(password, salt, iterations);
+
                     const displayName = email.split('@')[0];
-                    
-                    // Create user document (non-admin by default)
-                    await setDoc(doc(db, 'users', user.uid), {
+                    const usersCol = collection(db, 'users');
+                    const newDocRef = doc(usersCol);
+                    await setDoc(newDocRef, {
                         email: email,
                         displayName: displayName,
+                        passwordHash: pwdHash,
+                        salt: salt,
+                        iterations: iterations,
                         isAdmin: false,
                         createdAt: new Date(),
-                        lastLogin: new Date()
+                        createdDate: new Date().toISOString()
                     });
-                    
+
                     showSuccess('Account created! Redirecting...');
-                    setTimeout(() => {
-                        window.location.href = 'App/watch.html';
-                    }, 1000);
+                    setTimeout(() => { window.location.href = 'App/watch.html'; }, 800);
                 }
-            } catch (error) {
-                console.error('Auth error:', error);
-                let errorMsg = 'An error occurred. Please try again.';
-                
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMsg = 'Email already in use. Try logging in instead.';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMsg = 'Invalid email address.';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMsg = 'Password should be at least 6 characters.';
-                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    errorMsg = 'Invalid email or password.';
-                } else if (error.code === 'auth/invalid-credential') {
-                    errorMsg = 'Invalid email or password.';
-                }
-                
-                showError(errorMsg);
+            } catch (err) {
+                console.error('Auth error:', err);
+                showError(err.message || 'An error occurred');
                 submitBtn.classList.remove('loading');
                 submitBtn.textContent = isLoginMode ? 'Login' : 'Register';
             }

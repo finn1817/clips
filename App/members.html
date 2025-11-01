@@ -266,9 +266,8 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+    import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+    import { app, db, validateSessionAndGetUser, attachLogout } from "../js/auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBYCj-gsiuAZSnRINPrSsxUWjx6IscSwI",
@@ -279,39 +278,19 @@
             appId: "1:571193015931:web:bfb7732e2a40609408acde"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
         let currentUser = null;
         let isAdmin = false;
 
-        // Auth state
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = '../index.html';
-                return;
-            }
-
+        // Session-based auth via shared helper
+        (async function checkSession() {
+            const { user, data } = await validateSessionAndGetUser({ requireAdmin: true, redirectTo: '../index.html', redirectIfNotAdmin: 'watch.html' });
             currentUser = user;
-
-            // Check if user is admin
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (!userDoc.exists() || !userDoc.data().isAdmin) {
-                alert('Access denied. Admin only.');
-                window.location.href = 'watch.html';
-                return;
-            }
-
             isAdmin = true;
             loadMembers();
-        });
+        })().catch(() => {});
 
         // Logout
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await signOut(auth);
-            window.location.href = '../index.html';
-        });
+        attachLogout('#logoutBtn', '../index.html');
 
         // Back button
         document.getElementById('backBtn').addEventListener('click', () => {

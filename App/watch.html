@@ -368,10 +368,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
-        import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
+    import { collection, getDocs, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+    import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
+    import { app, db, validateSessionAndGetUser, attachLogout } from "../js/auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBYCj-gsiuAZSnRINPrSsxUWjx6IscSwI",
@@ -382,15 +381,12 @@
             appId: "1:571193015931:web:bfb7732e2a40609408acde"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
+    const storage = getStorage(app);
 
-        let currentUser = null;
-        let isAdmin = false;
-        let currentVideoId = null;
-        let currentVideoData = null;
+    let currentUser = null;
+    let isAdmin = false;
+    let currentVideoId = null;
+    let currentVideoData = null;
 
         // Drawing variables
         let isDrawing = false;
@@ -406,37 +402,22 @@
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Auth state
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = '../index.html';
-                return;
-            }
-
+        // Session-based auth via shared helper
+        (async function checkSession() {
+            const { user, data } = await validateSessionAndGetUser({ requireAdmin: false, redirectTo: '../index.html' });
             currentUser = user;
-
-            // Get user data
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                isAdmin = userData.isAdmin || false;
-                document.getElementById('userInfo').textContent = `Welcome, ${userData.displayName}`;
-
-                if (isAdmin) {
-                    document.getElementById('uploadBtn').style.display = 'block';
-                    document.getElementById('membersBtn').style.display = 'block';
-                    document.getElementById('adminControls').classList.add('visible');
-                }
+            isAdmin = !!data.isAdmin;
+            document.getElementById('userInfo').textContent = `Welcome, ${data.displayName}`;
+            if (isAdmin) {
+                document.getElementById('uploadBtn').style.display = 'block';
+                document.getElementById('membersBtn').style.display = 'block';
+                document.getElementById('adminControls').classList.add('visible');
             }
-
             loadVideos();
-        });
+        })().catch(() => {});
 
         // Logout
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await signOut(auth);
-            window.location.href = '../index.html';
-        });
+        attachLogout('#logoutBtn', '../index.html');
 
         // Navigation
         document.getElementById('uploadBtn').addEventListener('click', () => {
