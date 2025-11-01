@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Video - Timon HS Soccer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: white;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #202020;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .navbar-brand span {
+            color: #3ea6ff;
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .navbar-btn {
+            padding: 8px 16px;
+            background: #3ea6ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .navbar-btn:hover {
+            background: #1c8fe0;
+        }
+
+        .navbar-btn.secondary {
+            background: #2a2a2a;
+        }
+
+        .navbar-btn.secondary:hover {
+            background: #3a3a3a;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 16px;
+        }
+
+        .upload-form {
+            background: #202020;
+            border-radius: 8px;
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: #2a2a2a;
+            border: 2px solid #3a3a3a;
+            border-radius: 6px;
+            color: white;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3ea6ff;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #3a3a3a;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area:hover {
+            border-color: #3ea6ff;
+            background: #2a2a2a;
+        }
+
+        .file-upload-area.dragging {
+            border-color: #3ea6ff;
+            background: #2a2a2a;
+        }
+
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: #aaa;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .file-info.visible {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background: #2a2a2a;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar-container.visible {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3ea6ff 0%, #1c8fe0 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #3ea6ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            background: #1c8fe0;
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .success-message {
+            background: #44ff44;
+            color: #000;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .success-message.visible {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .upload-form {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">⚽ <span>Timon HS Soccer</span> - Upload Video</div>
+        <div class="navbar-actions">
+            <button class="navbar-btn secondary" id="backBtn">← Back to Videos</button>
+            <button class="navbar-btn secondary" id="logoutBtn">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>📹 Upload Game Footage</h1>
+            <p>Add new soccer game videos to the portal</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <form class="upload-form" id="uploadForm">
+            <div class="form-group">
+                <label for="videoTitle">Video Title *</label>
+                <input type="text" id="videoTitle" placeholder="e.g., Game vs St. Mary's - First Half" required>
+            </div>
+
+            <div class="form-group">
+                <label for="videoDescription">Description</label>
+                <textarea id="videoDescription" placeholder="Add details about this game footage..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Video File *</label>
+                <div class="file-upload-area" id="fileUploadArea">
+                    <input type="file" id="videoFile" accept="video/*" required>
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">
+                        Click to browse or drag and drop your video file<br>
+                        <small>Supported formats: MP4, MTS, AVI, MOV</small>
+                    </div>
+                </div>
+                <div class="file-info" id="fileInfo">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-size" id="fileSize"></div>
+                </div>
+            </div>
+
+            <div class="progress-bar-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">Upload Video</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBYCj-gsiuAZSnRINPrSsxUWjx6IscSwI",
+            authDomain: "soccer-footage.firebaseapp.com",
+            projectId: "soccer-footage",
+            storageBucket: "soccer-footage.firebasestorage.app",
+            messagingSenderId: "571193015931",
+            appId: "1:571193015931:web:bfb7732e2a40609408acde"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let currentUser = null;
+        let isAdmin = false;
+        let selectedFile = null;
+
+        // Auth state
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            currentUser = user;
+
+            // Check if user is admin
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!userDoc.exists() || !userDoc.data().isAdmin) {
+                alert('Access denied. Admin only.');
+                window.location.href = 'watch.html';
+                return;
+            }
+
+            isAdmin = true;
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = '../index.html';
+        });
+
+        // Back button
+        document.getElementById('backBtn').addEventListener('click', () => {
+            window.location.href = 'watch.html';
+        });
+
+        // File upload area
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const fileInput = document.getElementById('videoFile');
+
+        fileUploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag and drop
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragging');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('dragging');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragging');
+            
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+
+        // File selection
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            if (fileInput.files.length > 0) {
+                selectedFile = fileInput.files[0];
+                
+                // Display file info
+                document.getElementById('fileName').textContent = selectedFile.name;
+                document.getElementById('fileSize').textContent = formatFileSize(selectedFile.size);
+                document.getElementById('fileInfo').classList.add('visible');
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        }
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!selectedFile) {
+                showError('Please select a video file');
+                return;
+            }
+
+            const title = document.getElementById('videoTitle').value.trim();
+            const description = document.getElementById('videoDescription').value.trim();
+
+            if (!title) {
+                showError('Please enter a video title');
+                return;
+            }
+
+            // Disable form
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'Uploading...';
+            hideMessages();
+
+            try {
+                // Create unique filename
+                const timestamp = Date.now();
+                const fileName = `${timestamp}_${selectedFile.name}`;
+                const storagePath = `videos/${fileName}`;
+
+                // Upload to Storage
+                const storageRef = ref(storage, storagePath);
+                const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
+                // Show progress
+                document.getElementById('progressContainer').classList.add('visible');
+
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressBar').textContent = Math.round(progress) + '%';
+                    },
+                    (error) => {
+                        console.error('Upload error:', error);
+                        showError('Upload failed: ' + error.message);
+                        resetForm();
+                    },
+                    async () => {
+                        // Upload complete
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+                        // Get user data
+                        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                        const userData = userDoc.data();
+
+                        // Save metadata to Firestore
+                        await addDoc(collection(db, 'videos'), {
+                            title: title,
+                            description: description,
+                            fileName: selectedFile.name,
+                            storagePath: storagePath,
+                            downloadURL: downloadURL,
+                            uploadedBy: currentUser.uid,
+                            uploadedByName: userData.displayName || 'Unknown',
+                            uploadedAt: new Date(),
+                            fileSize: selectedFile.size
+                        });
+
+                        showSuccess('Video uploaded successfully! Redirecting...');
+                        setTimeout(() => {
+                            window.location.href = 'watch.html';
+                        }, 2000);
+                    }
+                );
+            } catch (error) {
+                console.error('Error uploading video:', error);
+                showError('Error: ' + error.message);
+                resetForm();
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('visible');
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.classList.add('visible');
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').classList.remove('visible');
+            document.getElementById('successMessage').classList.remove('visible');
+        }
+
+        function resetForm() {
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').textContent = 'Upload Video';
+            document.getElementById('progressContainer').classList.remove('visible');
+            document.getElementById('progressBar').style.width = '0%';
+        }
+    </script>
+</body>
+</html>

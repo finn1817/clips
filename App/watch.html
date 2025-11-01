@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Game Footage - Timon HS Soccer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f0f;
+            color: white;
+        }
+
+        .navbar {
+            background: #202020;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .navbar-brand span {
+            color: #3ea6ff;
+        }
+
+        .navbar-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .navbar-btn {
+            padding: 8px 16px;
+            background: #3ea6ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .navbar-btn:hover {
+            background: #1c8fe0;
+        }
+
+        .navbar-btn.secondary {
+            background: #2a2a2a;
+        }
+
+        .navbar-btn.secondary:hover {
+            background: #3a3a3a;
+        }
+
+        .main-container {
+            display: flex;
+            max-width: 1800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        .video-section {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #videoPlayer {
+            width: 100%;
+            display: block;
+        }
+
+        #drawingCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            display: none;
+        }
+
+        .video-info {
+            background: #202020;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .video-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .video-description {
+            color: #aaa;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .admin-controls {
+            background: #202020;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            margin-bottom: 15px;
+        }
+
+        .admin-controls.visible {
+            display: block;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: #3ea6ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: #1c8fe0;
+        }
+
+        .control-btn.danger {
+            background: #ff4444;
+        }
+
+        .control-btn.danger:hover {
+            background: #cc0000;
+        }
+
+        .control-btn.active {
+            background: #ff9800;
+        }
+
+        .drawing-tools {
+            display: none;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #3a3a3a;
+        }
+
+        .drawing-tools.visible {
+            display: flex;
+        }
+
+        .color-picker {
+            width: 50px;
+            height: 35px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .tool-btn {
+            padding: 8px 16px;
+            background: #2a2a2a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .tool-btn:hover {
+            background: #3a3a3a;
+        }
+
+        .tool-btn.active {
+            background: #3ea6ff;
+        }
+
+        .sidebar {
+            width: 400px;
+            background: #202020;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        .video-list-item {
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .video-list-item:hover {
+            background: #3a3a3a;
+            transform: translateX(5px);
+        }
+
+        .video-list-item.active {
+            background: #3ea6ff;
+        }
+
+        .video-list-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .video-list-desc {
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .delete-video-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .video-list-item:hover .delete-video-btn {
+            display: block;
+        }
+
+        .delete-video-btn:hover {
+            background: #cc0000;
+        }
+
+        .no-videos {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .user-info {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .navbar-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .control-row {
+                flex-direction: column;
+            }
+
+            .control-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">⚽ <span>Timon HS Soccer</span></div>
+        <div class="navbar-actions">
+            <span class="user-info" id="userInfo">Loading...</span>
+            <button class="navbar-btn" id="uploadBtn" style="display: none;">Upload Video</button>
+            <button class="navbar-btn secondary" id="membersBtn" style="display: none;">Manage Members</button>
+            <button class="navbar-btn secondary" id="logoutBtn">Logout</button>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="video-section">
+            <div class="video-container">
+                <video id="videoPlayer" controls>
+                    <source src="" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <canvas id="drawingCanvas"></canvas>
+            </div>
+
+            <div class="video-info" id="videoInfo">
+                <div class="video-title">Select a video to watch</div>
+                <div class="video-description">Choose a game from the list on the right</div>
+            </div>
+
+            <div class="admin-controls" id="adminControls">
+                <div class="control-row">
+                    <button class="control-btn" id="editModeBtn">✏️ Enable Drawing Mode</button>
+                    <button class="control-btn" id="downloadBtn">⬇️ Download Video</button>
+                </div>
+                <div class="drawing-tools" id="drawingTools">
+                    <span style="font-size: 14px; color: #aaa;">Drawing Tools:</span>
+                    <button class="tool-btn active" id="penTool">✏️ Pen</button>
+                    <button class="tool-btn" id="circleTool">⭕ Circle</button>
+                    <button class="tool-btn" id="eraserTool">🧹 Eraser</button>
+                    <input type="color" class="color-picker" id="colorPicker" value="#ff0000">
+                    <button class="control-btn danger" id="clearCanvas">Clear All</button>
+                    <button class="control-btn" id="exitDrawingBtn">Exit Drawing Mode</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <h2>Game Footage</h2>
+            <div id="videoList">
+                <div class="no-videos">Loading videos...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+        import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBYCj-gsiuAZSnRINPrSsxUWjx6IscSwI",
+            authDomain: "soccer-footage.firebaseapp.com",
+            projectId: "soccer-footage",
+            storageBucket: "soccer-footage.firebasestorage.app",
+            messagingSenderId: "571193015931",
+            appId: "1:571193015931:web:bfb7732e2a40609408acde"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let currentUser = null;
+        let isAdmin = false;
+        let currentVideoId = null;
+        let currentVideoData = null;
+
+        // Drawing variables
+        let isDrawing = false;
+        let drawingMode = false;
+        let currentTool = 'pen';
+        let currentColor = '#ff0000';
+        let lastX = 0;
+        let lastY = 0;
+        let startX = 0;
+        let startY = 0;
+
+        const videoPlayer = document.getElementById('videoPlayer');
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Auth state
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            currentUser = user;
+
+            // Get user data
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                isAdmin = userData.isAdmin || false;
+                document.getElementById('userInfo').textContent = `Welcome, ${userData.displayName}`;
+
+                if (isAdmin) {
+                    document.getElementById('uploadBtn').style.display = 'block';
+                    document.getElementById('membersBtn').style.display = 'block';
+                    document.getElementById('adminControls').classList.add('visible');
+                }
+            }
+
+            loadVideos();
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = '../index.html';
+        });
+
+        // Navigation
+        document.getElementById('uploadBtn').addEventListener('click', () => {
+            window.location.href = 'upload.html';
+        });
+
+        document.getElementById('membersBtn').addEventListener('click', () => {
+            window.location.href = 'members.html';
+        });
+
+        // Load videos
+        async function loadVideos() {
+            const videoList = document.getElementById('videoList');
+            
+            try {
+                const videosSnapshot = await getDocs(collection(db, 'videos'));
+                
+                if (videosSnapshot.empty) {
+                    videoList.innerHTML = '<div class="no-videos">No videos uploaded yet.<br>Admins can upload videos using the Upload button.</div>';
+                    return;
+                }
+
+                videoList.innerHTML = '';
+                videosSnapshot.forEach((doc) => {
+                    const video = doc.data();
+                    const videoItem = document.createElement('div');
+                    videoItem.className = 'video-list-item';
+                    videoItem.innerHTML = `
+                        <div class="video-list-title">${video.title}</div>
+                        <div class="video-list-desc">${video.description || 'No description'}</div>
+                        ${isAdmin ? `<button class="delete-video-btn" data-id="${doc.id}">Delete</button>` : ''}
+                    `;
+                    
+                    videoItem.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('delete-video-btn')) {
+                            loadVideo(doc.id, video);
+                        }
+                    });
+
+                    if (isAdmin) {
+                        const deleteBtn = videoItem.querySelector('.delete-video-btn');
+                        deleteBtn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete "${video.title}"?`)) {
+                                await deleteVideo(doc.id, video.storagePath);
+                            }
+                        });
+                    }
+
+                    videoList.appendChild(videoItem);
+                });
+            } catch (error) {
+                console.error('Error loading videos:', error);
+                videoList.innerHTML = '<div class="no-videos">Error loading videos</div>';
+            }
+        }
+
+        // Load video
+        function loadVideo(videoId, videoData) {
+            currentVideoId = videoId;
+            currentVideoData = videoData;
+
+            // Update active state
+            document.querySelectorAll('.video-list-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Set video source
+            videoPlayer.src = videoData.downloadURL;
+            videoPlayer.load();
+
+            // Update info
+            document.getElementById('videoInfo').innerHTML = `
+                <div class="video-title">${videoData.title}</div>
+                <div class="video-description">${videoData.description || 'No description'}</div>
+            `;
+
+            // Reset canvas
+            if (drawingMode) {
+                exitDrawingMode();
+            }
+        }
+
+        // Delete video
+        async function deleteVideo(videoId, storagePath) {
+            try {
+                // Delete from Storage
+                const storageRef = ref(storage, storagePath);
+                await deleteObject(storageRef);
+
+                // Delete from Firestore
+                await deleteDoc(doc(db, 'videos', videoId));
+
+                alert('Video deleted successfully');
+                loadVideos();
+
+                if (currentVideoId === videoId) {
+                    videoPlayer.src = '';
+                    document.getElementById('videoInfo').innerHTML = `
+                        <div class="video-title">Select a video to watch</div>
+                        <div class="video-description">Choose a game from the list on the right</div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error deleting video:', error);
+                alert('Error deleting video: ' + error.message);
+            }
+        }
+
+        // Download video
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (!currentVideoData) {
+                alert('Please select a video first');
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = currentVideoData.downloadURL;
+            a.download = currentVideoData.fileName;
+            a.click();
+        });
+
+        // Drawing mode
+        document.getElementById('editModeBtn').addEventListener('click', () => {
+            if (!currentVideoData) {
+                alert('Please select a video first');
+                return;
+            }
+            enterDrawingMode();
+        });
+
+        document.getElementById('exitDrawingBtn').addEventListener('click', () => {
+            exitDrawingMode();
+        });
+
+        function enterDrawingMode() {
+            drawingMode = true;
+            videoPlayer.pause();
+            
+            // Setup canvas
+            canvas.width = videoPlayer.offsetWidth;
+            canvas.height = videoPlayer.offsetHeight;
+            canvas.style.display = 'block';
+
+            document.getElementById('drawingTools').classList.add('visible');
+            document.getElementById('editModeBtn').classList.add('active');
+            document.getElementById('editModeBtn').textContent = '🎨 Drawing Mode Active';
+        }
+
+        function exitDrawingMode() {
+            drawingMode = false;
+            canvas.style.display = 'none';
+            document.getElementById('drawingTools').classList.remove('visible');
+            document.getElementById('editModeBtn').classList.remove('active');
+            document.getElementById('editModeBtn').textContent = '✏️ Enable Drawing Mode';
+        }
+
+        // Drawing tools
+        document.getElementById('penTool').addEventListener('click', () => {
+            selectTool('pen');
+        });
+
+        document.getElementById('circleTool').addEventListener('click', () => {
+            selectTool('circle');
+        });
+
+        document.getElementById('eraserTool').addEventListener('click', () => {
+            selectTool('eraser');
+        });
+
+        document.getElementById('colorPicker').addEventListener('change', (e) => {
+            currentColor = e.target.value;
+        });
+
+        document.getElementById('clearCanvas').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        function selectTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tool + 'Tool').classList.add('active');
+        }
+
+        // Canvas drawing
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        });
+
+        function startDrawing(e) {
+            if (!drawingMode) return;
+            
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+            startX = lastX;
+            startY = lastY;
+        }
+
+        function draw(e) {
+            if (!isDrawing || !drawingMode) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.lineWidth = currentTool === 'eraser' ? 20 : 3;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = currentTool === 'eraser' ? '#000000' : currentColor;
+            ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+
+            if (currentTool === 'pen' || currentTool === 'eraser') {
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                lastX = x;
+                lastY = y;
+            }
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing || !drawingMode) return;
+
+            if (currentTool === 'circle') {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+                
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+
+            isDrawing = false;
+        }
+
+        // Resize canvas when window resizes
+        window.addEventListener('resize', () => {
+            if (drawingMode) {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                canvas.width = videoPlayer.offsetWidth;
+                canvas.height = videoPlayer.offsetHeight;
+                ctx.putImageData(imageData, 0, 0);
+            }
+        });
+    </script>
+</body>
+</html>
