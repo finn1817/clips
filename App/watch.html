@@ -229,6 +229,23 @@
             cursor: pointer;
             transition: all 0.3s;
             position: relative;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .video-thumb {
+            width: 96px;
+            height: 54px;
+            border-radius: 4px;
+            background: #111;
+            object-fit: cover;
+            flex: none;
+        }
+
+        .video-list-content {
+            flex: 1;
+            min-width: 0;
         }
 
         .video-list-item:hover {
@@ -284,6 +301,74 @@
             font-size: 14px;
         }
 
+        /* Pin overlay */
+        #pinOverlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.75);
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            padding: 10px 12px;
+            max-width: 50%;
+            display: none;
+            z-index: 5;
+            cursor: pointer;
+        }
+
+        #pinOverlay .time {
+            color: #3ea6ff;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        /* Pins section */
+        .pins-section {
+            background: #202020;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .pins-section h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #3a3a3a;
+            padding-bottom: 8px;
+        }
+
+        .pin-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .pin-item:last-child { border-bottom: none; }
+
+        .pin-time {
+            color: #3ea6ff;
+            font-weight: 600;
+            cursor: pointer;
+            flex: none;
+        }
+
+        .pin-note { color: #ccc; font-size: 14px; line-height: 1.4; }
+
+        .pin-delete {
+            margin-left: auto;
+            background: #ff4444;
+            border: none;
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .pin-item.admin .pin-delete { display: inline-block; }
+
         @media (max-width: 1200px) {
             .main-container {
                 flex-direction: column;
@@ -335,6 +420,7 @@
                     Your browser does not support the video tag.
                 </video>
                 <canvas id="drawingCanvas"></canvas>
+                <div id="pinOverlay" title="Click to jump to this moment"></div>
             </div>
 
             <div class="video-info" id="videoInfo">
@@ -346,6 +432,8 @@
                 <div class="control-row">
                     <button class="control-btn" id="editModeBtn">✏️ Enable Drawing Mode</button>
                     <button class="control-btn" id="downloadBtn">⬇️ Download Video</button>
+                    <button class="control-btn" id="pinHereBtn">📍 Pin Here</button>
+                    <button class="control-btn" id="setThumbBtn">🖼️ Set Thumbnail</button>
                 </div>
                 <div class="drawing-tools" id="drawingTools">
                     <span style="font-size: 14px; color: #aaa;">Drawing Tools:</span>
@@ -368,8 +456,8 @@
     </div>
 
     <script type="module">
-    import { collection, getDocs, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
-    import { getStorage, ref, deleteObject } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
+    import { collection, getDocs, doc, getDoc, deleteDoc, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+    import { getStorage, ref, deleteObject, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-storage.js";
     import { app, db, validateSessionAndGetUser, attachLogout } from "../js/auth.js";
 
         const firebaseConfig = {
@@ -387,6 +475,9 @@
     let isAdmin = false;
     let currentVideoId = null;
     let currentVideoData = null;
+    let currentVideoPins = [];
+    let lastOverlayTimeout = null;
+    let recentlyShownPinIds = new Set();
 
         // Drawing variables
         let isDrawing = false;
@@ -441,19 +532,23 @@
                 }
 
                 videoList.innerHTML = '';
-                videosSnapshot.forEach((doc) => {
-                    const video = doc.data();
+                videosSnapshot.forEach((docSnap) => {
+                    const video = docSnap.data();
                     const videoItem = document.createElement('div');
                     videoItem.className = 'video-list-item';
+                    const thumbHTML = video.thumbnailURL ? `<img class="video-thumb" src="${video.thumbnailURL}" alt="thumb">` : `<div class="video-thumb"></div>`;
                     videoItem.innerHTML = `
-                        <div class="video-list-title">${video.title}</div>
-                        <div class="video-list-desc">${video.description || 'No description'}</div>
-                        ${isAdmin ? `<button class="delete-video-btn" data-id="${doc.id}">Delete</button>` : ''}
+                        ${thumbHTML}
+                        <div class="video-list-content">
+                            <div class="video-list-title">${video.title}</div>
+                            <div class="video-list-desc">${video.description || 'No description'}</div>
+                        </div>
+                        ${isAdmin ? `<button class="delete-video-btn" data-id="${docSnap.id}">Delete</button>` : ''}
                     `;
                     
                     videoItem.addEventListener('click', (e) => {
                         if (!e.target.classList.contains('delete-video-btn')) {
-                            loadVideo(doc.id, video);
+                            loadVideo(docSnap.id, video);
                         }
                     });
 
@@ -462,7 +557,7 @@
                         deleteBtn.addEventListener('click', async (e) => {
                             e.stopPropagation();
                             if (confirm(`Delete "${video.title}"?`)) {
-                                await deleteVideo(doc.id, video.storagePath);
+                                await deleteVideo(docSnap.id, video.storagePath);
                             }
                         });
                     }
@@ -479,6 +574,8 @@
         function loadVideo(videoId, videoData) {
             currentVideoId = videoId;
             currentVideoData = videoData;
+            currentVideoPins = [];
+            recentlyShownPinIds.clear();
 
             // Update active state
             document.querySelectorAll('.video-list-item').forEach(item => {
@@ -496,10 +593,101 @@
                 <div class="video-description">${videoData.description || 'No description'}</div>
             `;
 
+            // Render pins section shell
+            renderPinsSection([]);
+
+            // Fetch pins for this video
+            loadPinsForVideo(videoId);
+
             // Reset canvas
             if (drawingMode) {
                 exitDrawingMode();
             }
+        }
+
+        async function loadPinsForVideo(videoId) {
+            try {
+                const pinsSnap = await getDocs(collection(db, 'videos', videoId, 'pins'));
+                const arr = [];
+                pinsSnap.forEach((p) => {
+                    const d = p.data();
+                    arr.push({ id: p.id, ...d });
+                });
+                arr.sort((a,b) => (a.timeSec||0) - (b.timeSec||0));
+                currentVideoPins = arr;
+                renderPinsSection(arr);
+            } catch (e) {
+                console.error('Error loading pins:', e);
+            }
+        }
+
+        function renderPinsSection(pins) {
+            const container = document.getElementById('videoInfo');
+            let section = document.getElementById('pinsSection');
+            if (!section) {
+                section = document.createElement('div');
+                section.id = 'pinsSection';
+                section.className = 'pins-section';
+                container.appendChild(section);
+            }
+            if (!pins || pins.length === 0) {
+                section.innerHTML = '<h3>Pinned Points</h3><div style="color:#666;font-size:14px;">No pins yet.</div>';
+                return;
+            }
+            const html = ['<h3>Pinned Points</h3>'];
+            pins.forEach(pin => {
+                const adminClass = isAdmin ? ' admin' : '';
+                html.push(`
+                    <div class="pin-item${adminClass}">
+                        <span class="pin-time" data-pin-id="${pin.id}">${formatTime(pin.timeSec)}</span>
+                        <span class="pin-note">${escapeHtml(pin.note || '')}</span>
+                        ${isAdmin ? `<button class="pin-delete" data-pin-id="${pin.id}">Delete</button>` : ''}
+                    </div>
+                `);
+            });
+            section.innerHTML = html.join('');
+
+            // Bind pin time click
+            section.querySelectorAll('.pin-time').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-pin-id');
+                    const pin = currentVideoPins.find(p => p.id === id);
+                    if (pin) {
+                        videoPlayer.currentTime = Math.max(0, pin.timeSec - 0.05);
+                        videoPlayer.play();
+                    }
+                });
+            });
+
+            // Bind delete
+            if (isAdmin) {
+                section.querySelectorAll('.pin-delete').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.getAttribute('data-pin-id');
+                        if (confirm('Delete this pin?')) {
+                            try {
+                                await deleteDoc(doc(db, 'videos', currentVideoId, 'pins', id));
+                                currentVideoPins = currentVideoPins.filter(p => p.id !== id);
+                                renderPinsSection(currentVideoPins);
+                            } catch (err) {
+                                console.error('Error deleting pin:', err);
+                                alert('Could not delete pin: ' + (err.message || 'unknown'));
+                            }
+                        }
+                    });
+                });
+            }
+        }
+
+        function formatTime(sec) {
+            sec = Math.max(0, Math.floor(sec || 0));
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${m}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function escapeHtml(s) {
+            return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
         }
 
         // Delete video
@@ -540,6 +728,75 @@
             a.download = currentVideoData.fileName;
             a.click();
         });
+
+        // Pin Here (admin)
+        document.getElementById('pinHereBtn').addEventListener('click', async () => {
+            if (!isAdmin || !currentVideoData) {
+                alert('Select a video first');
+                return;
+            }
+            const timeSec = videoPlayer.currentTime;
+            let note = prompt('Add a short note for this pin (max 500 chars):') || '';
+            if (note.length > 500) note = note.slice(0, 500);
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                const userData = userDoc.data() || {};
+                const newPin = {
+                    timeSec: Math.round(timeSec * 10) / 10,
+                    note,
+                    createdBy: currentUser.uid,
+                    createdByName: userData.displayName || 'Unknown',
+                    createdAt: new Date()
+                };
+                const added = await addDoc(collection(db, 'videos', currentVideoId, 'pins'), newPin);
+                currentVideoPins.push({ id: added.id, ...newPin });
+                currentVideoPins.sort((a,b) => (a.timeSec||0) - (b.timeSec||0));
+                renderPinsSection(currentVideoPins);
+                // Show overlay immediately
+                showPinOverlay({ id: added.id, ...newPin });
+            } catch (err) {
+                console.error('Error adding pin:', err);
+                alert('Could not add pin: ' + (err.message || 'unknown'));
+            }
+        });
+
+        // Set Thumbnail (admin)
+        document.getElementById('setThumbBtn').addEventListener('click', async () => {
+            if (!isAdmin || !currentVideoData) {
+                alert('Select a video first');
+                return;
+            }
+            try {
+                const blob = await captureFrame(videoPlayer);
+                if (!blob) {
+                    alert('Could not capture frame. If this persists, your Storage bucket may need CORS enabled.');
+                    return;
+                }
+                const thumbPath = `thumbnails/${currentVideoId}.jpg`;
+                const storageRef = ref(storage, thumbPath);
+                await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
+                const url = await getDownloadURL(storageRef);
+                await updateVideoDoc({ thumbnailURL: url, thumbnailPath: thumbPath, thumbnailUpdatedAt: new Date() });
+                // Update currentVideoData and list UI casually
+                currentVideoData.thumbnailURL = url;
+                // Refresh list for current visual update (optional: minimal patch)
+                loadVideos();
+                alert('Thumbnail set successfully');
+            } catch (err) {
+                console.error('Error setting thumbnail:', err);
+                alert('Could not set thumbnail: ' + (err.message || 'unknown'));
+            }
+        });
+
+        async function updateVideoDoc(patch) {
+            try {
+                const docRef = doc(db, 'videos', currentVideoId);
+                await updateDoc(docRef, patch);
+            } catch (e) {
+                console.error('updateVideoDoc failed', e);
+                throw e;
+            }
+        }
 
         // Drawing mode
         document.getElementById('editModeBtn').addEventListener('click', () => {
@@ -698,6 +955,82 @@
                 ctx.putImageData(imageData, 0, 0);
             }
         });
+
+        // Timeupdate to trigger pin overlay
+        videoPlayer.addEventListener('timeupdate', () => {
+            if (!currentVideoPins || currentVideoPins.length === 0) return;
+            const t = videoPlayer.currentTime;
+            // Show pins whose timeSec is within 0.25s of current time, and not shown in the last second
+            const near = currentVideoPins.find(p => Math.abs((p.timeSec||0) - t) < 0.25);
+            if (near) {
+                const key = `${near.id}@${Math.floor(t)}`;
+                if (!recentlyShownPinIds.has(key)) {
+                    showPinOverlay(near);
+                    recentlyShownPinIds.add(key);
+                    // Cleanup keys to avoid unlimited growth
+                    if (recentlyShownPinIds.size > 1000) {
+                        recentlyShownPinIds.clear();
+                    }
+                }
+            }
+        });
+
+        function showPinOverlay(pin) {
+            const el = document.getElementById('pinOverlay');
+            el.innerHTML = `<span class="time">${formatTime(pin.timeSec)}</span>${escapeHtml(pin.note || '')}`;
+            el.style.display = 'block';
+            el.onclick = () => {
+                videoPlayer.currentTime = Math.max(0, (pin.timeSec||0) - 0.05);
+                videoPlayer.play();
+            };
+            if (lastOverlayTimeout) clearTimeout(lastOverlayTimeout);
+            lastOverlayTimeout = setTimeout(() => {
+                el.style.display = 'none';
+            }, 6000);
+        }
+
+        async function captureFrame(videoEl) {
+            try {
+                const w = videoEl.videoWidth || 1280;
+                const h = videoEl.videoHeight || 720;
+                const c = document.createElement('canvas');
+                c.width = Math.max(320, Math.min(960, w));
+                c.height = Math.round(c.width * (h / w));
+                const cctx = c.getContext('2d');
+                cctx.drawImage(videoEl, 0, 0, c.width, c.height);
+                return await new Promise(resolve => c.toBlob(resolve, 'image/jpeg', 0.8));
+            } catch (e) {
+                console.error('captureFrame failed', e);
+                return null;
+            }
+        }
+
+        // Make pin overlay draggable
+        (function makeOverlayDraggable(){
+            const el = document.getElementById('pinOverlay');
+            let dragging = false; let startX=0, startY=0, startLeft=0, startTop=0;
+            el.addEventListener('mousedown', (e) => {
+                dragging = true;
+                // Switch to left/top positioning for drag
+                const rect = el.getBoundingClientRect();
+                const parentRect = el.parentElement.getBoundingClientRect();
+                el.style.left = (rect.left - parentRect.left) + 'px';
+                el.style.top = (rect.top - parentRect.top) + 'px';
+                el.style.right = 'auto';
+                startX = e.clientX; startY = e.clientY;
+                startLeft = parseFloat(el.style.left) || 0;
+                startTop = parseFloat(el.style.top) || 0;
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (!dragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                el.style.left = (startLeft + dx) + 'px';
+                el.style.top = (startTop + dy) + 'px';
+            });
+            window.addEventListener('mouseup', () => { dragging = false; });
+        })();
     </script>
 </body>
 </html>
